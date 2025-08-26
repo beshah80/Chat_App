@@ -1,0 +1,149 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  avatar    String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastSeen  DateTime @default(now())
+  isOnline  Boolean  @default(false)
+
+  // Password for authentication
+  password String
+
+  // Messages sent by this user
+  messages Message[]
+
+  // Conversations this user participates in
+  participants Participant[]
+
+  // Users this user has blocked
+  blockedUsers   BlockedUser[] @relation("BlockerUser")
+  blockedByUsers BlockedUser[] @relation("BlockedUser")
+
+  @@map("users")
+}
+
+model Conversation {
+  id          String   @id @default(cuid())
+  name        String?  // Optional name for group chats
+  type        ConversationType
+  isGlobal    Boolean  @default(false) // For the global chat room
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastMessageAt DateTime?
+
+  // Messages in this conversation
+  messages Message[]
+
+  // Participants in this conversation
+  participants Participant[]
+
+  @@map("conversations")
+}
+
+model Participant {
+  id               String   @id @default(cuid())
+  userId           String
+  conversationId   String
+  joinedAt         DateTime @default(now())
+  lastReadAt       DateTime @default(now())
+  role             ParticipantRole @default(MEMBER)
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conversationId])
+  @@map("participants")
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  content        String
+  type           MessageType @default(TEXT)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  editedAt       DateTime?
+  isDeleted      Boolean     @default(false)
+
+  // Relations
+  senderId       String
+  conversationId String
+  replyToId      String?
+
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  replyTo      Message?     @relation("MessageReply", fields: [replyToId], references: [id])
+  replies      Message[]    @relation("MessageReply")
+
+  // Message status tracking
+  messageStatus MessageStatus[]
+
+  @@map("messages")
+}
+
+model MessageStatus {
+  id        String           @id @default(cuid())
+  messageId String
+  userId    String
+  status    MessageStatusType
+  timestamp DateTime         @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("message_status")
+}
+
+model BlockedUser {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("BlockerUser", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlockedUser", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@map("blocked_users")
+}
+
+// Enums
+enum ConversationType {
+  DIRECT
+  GROUP
+  GLOBAL
+}
+
+enum ParticipantRole {
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
+}
+
+enum MessageStatusType {
+  SENT
+  DELIVERED
+  READ
+}

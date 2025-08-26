@@ -1,0 +1,327 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 14px;
+
+  /* Chat App Color System */
+  --chat-blue: #0088cc;
+  --chat-blue-dark: #0074b3;
+  --chat-blue-light: #40a7e3;
+  --chat-green: #04a777;
+  --chat-green-light: #26d0ce;
+  --chat-gray: #707579;
+  --chat-gray-light: #c4c9cc;
+  --chat-gray-lighter: #f1f3f4;
+  --chat-white: #ffffff;
+  --chat-black: #000000;
+  --chat-dark: #212529;
+  --chat-bg: #fafbfc;
+  --chat-sidebar: #ffffff;
+  --chat-message-out: #0088cc;
+  --chat-message-in: #ffffff;
+  --chat-unread: #ff3838;
+  --chat-online: #04a777;
+  --chat-border: #dadce0;
+
+  --background: var(--chat-bg);
+  --foreground: var(--chat-dark);
+  --card: var(--chat-white);
+  --card-foreground: var(--chat-dark);
+  --popover: var(--chat-white);
+  --popover-foreground: var(--chat-dark);
+  --primary: var(--chat-blue);
+  --primary-foreground: var(--chat-white);
+  --secondary: var(--chat-gray-lighter);
+  --secondary-foreground: var(--chat-dark);
+  --muted: var(--chat-gray-lighter);
+  --muted-foreground: var(--chat-gray);
+  --accent: var(--chat-blue-light);
+  --accent-foreground: var(--chat-white);
+  --destructive: var(--chat-unread);
+  --destructive-foreground: var(--chat-white);
+  --border: var(--chat-border);
+  --input: var(--chat-white);
+  --input-background: var(--chat-white);
+  --switch-background: var(--chat-gray-light);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: var(--chat-blue);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --chat-bg: #17212b;
+  --chat-sidebar: #2b5278;
+  --chat-dark: #ffffff;
+  --chat-white: #242f3d;
+  --chat-gray-lighter: #394249;
+  --chat-border: #394249;
+
+  --background: var(--chat-bg);
+  --foreground: var(--chat-dark);
+  --card: var(--chat-white);
+  --card-foreground: var(--chat-dark);
+  --popover: var(--chat-white);
+  --popover-foreground: var(--chat-dark);
+  --primary: var(--chat-blue);
+  --primary-foreground: var(--chat-white);
+  --secondary: var(--chat-gray-lighter);
+  --secondary-foreground: var(--chat-dark);
+  --muted: var(--chat-gray-lighter);
+  --muted-foreground: var(--chat-gray);
+  --accent: var(--chat-blue-light);
+  --accent-foreground: var(--chat-white);
+  --destructive: var(--chat-unread);
+  --destructive-foreground: var(--chat-white);
+  --border: var(--chat-border);
+  --input: var(--chat-white);
+  --ring: var(--chat-blue);
+}
+
+@layer base {
+
+  /* universal styles */
+  * {
+    border-color: var(--border);
+    ring: var(--ring);
+  }
+
+  /* body */
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: var(--font-size);
+  }
+
+  /* typography */
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.875rem;
+      font-weight: 600;
+      line-height: 1.25;
+      color: var(--chat-dark);
+    }
+
+    h2 {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      line-height: 1.3;
+      color: var(--chat-dark);
+    }
+
+    h3 {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 500;
+      line-height: 1.4;
+      color: var(--chat-dark);
+    }
+
+    h4 {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.125rem;
+      font-weight: 500;
+      line-height: 1.4;
+      color: var(--chat-dark);
+    }
+
+    p {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 400;
+      line-height: 1.5;
+      color: var(--chat-gray);
+    }
+
+    label {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      line-height: 1.5;
+      color: var(--chat-dark);
+    }
+
+    button {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    input,
+    textarea {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+  }
+}
+
+/* Chat App Custom Utilities */
+@layer utilities {
+  .chat-gradient {
+    background: linear-gradient(135deg, #0088cc 0%, #40a7e3 100%);
+  }
+
+  .chat-shadow {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .chat-shadow-lg {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .message-bubble-out {
+    background-color: var(--chat-message-out);
+    color: white;
+    border-radius: 18px 18px 6px 18px;
+  }
+
+  .message-bubble-in {
+    background-color: var(--chat-message-in);
+    color: var(--chat-dark);
+    border: 1px solid var(--chat-border);
+    border-radius: 18px 18px 18px 6px;
+  }
+
+  .sidebar-item:hover {
+    background-color: var(--chat-gray-lighter);
+  }
+
+  .online-indicator {
+    background-color: var(--chat-online);
+  }
+
+  .unread-badge {
+    background-color: var(--chat-unread);
+    color: white;
+    font-weight: 600;
+    font-size: 0.75rem;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse-soft 2s infinite;
+  }
+
+  @keyframes pulse-soft {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--chat-gray-light) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--chat-gray-light);
+    border-radius: 2px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: var(--chat-gray);
+  }
+
+  /* Chat list item enhancements */
+  .chat-list-item {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+  }
+
+  .chat-list-item:hover {
+    background-color: var(--chat-gray-lighter);
+  }
+
+  .chat-list-item.active {
+    background-color: var(--chat-blue);
+    color: white;
+  }
+
+  /* Message status indicators */
+  .message-status {
+    transition: color 0.2s ease;
+  }
+
+  .message-status.sent {
+    color: var(--chat-gray);
+  }
+
+  .message-status.delivered {
+    color: var(--chat-blue);
+  }
+
+  .message-status.read {
+    color: var(--chat-green);
+  }
+
+  /* Status indicators */
+  .status-online {
+    background-color: var(--chat-online);
+  }
+
+  .status-offline {
+    background-color: var(--chat-gray);
+  }
+
+  /* Animation utilities */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+  }
+}
+
+html {
+  font-size: var(--font-size);
+  scroll-behavior: smooth;
+}
+
+/* Component-specific styles */
+.user-avatar {
+  background: linear-gradient(135deg, var(--chat-blue), var(--chat-blue-light));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.online-indicator {
+  background: var(--chat-online);
+  border: 2px solid var(--chat-white);
+  border-radius: 50%;
+}
