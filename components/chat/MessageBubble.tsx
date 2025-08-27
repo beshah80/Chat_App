@@ -1,8 +1,7 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Check, CheckCheck, Clock } from 'lucide-react';
-import { formatTime } from '../../lib/utils';
+import { Avatar, AvatarFallback } from '../ui/avatar';
 
 interface Message {
   id: string;
@@ -20,13 +19,16 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({ message, showSender = false }: MessageBubbleProps) {
+  const formatTime = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(dateObj.getTime())) return '00:00';
+    return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
 
   const getStatusIcon = () => {
     if (!message.isOwn) return null;
 
-    const status = message.status?.toLowerCase();
-    
-    switch (status) {
+    switch (message.status?.toLowerCase()) {
       case 'sent':
         return <Clock className="w-3 h-3 text-gray-400" />;
       case 'delivered':
@@ -38,26 +40,16 @@ export function MessageBubble({ message, showSender = false }: MessageBubbleProp
     }
   };
 
-  const getMessageColors = () => {
-    if (message.isOwn) {
-      return {
-        bubble: 'message-bubble-out',
-        tail: 'border-l-[#0088cc]'
-      };
-    } else {
-      return {
-        bubble: 'message-bubble-in',
-        tail: 'border-r-white'
-      };
-    }
-  };
+  const getMessageColors = () => message.isOwn
+    ? { bubble: 'message-bubble-out', tail: 'border-l-[#0088cc]' }
+    : { bubble: 'message-bubble-in', tail: 'border-r-white' };
 
   const colors = getMessageColors();
 
   return (
     <div className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'} group`}>
       <div className={`flex items-end gap-2 max-w-[70%] ${message.isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-        {/* Avatar (only for non-own messages in group chats) */}
+        {/* Avatar for non-own messages */}
         {!message.isOwn && showSender && (
           <Avatar className="w-8 h-8 flex-shrink-0">
             <AvatarFallback className="user-avatar text-xs">
@@ -68,30 +60,20 @@ export function MessageBubble({ message, showSender = false }: MessageBubbleProp
 
         {/* Message bubble */}
         <div className="flex flex-col">
-          {/* Sender name (only for non-own messages in group chats) */}
           {!message.isOwn && showSender && (
-            <span className="text-xs text-gray-600 mb-1 ml-3">
-              {message.senderName}
-            </span>
+            <span className="text-xs text-gray-600 mb-1 ml-3">{message.senderName}</span>
           )}
 
-          {/* Message content */}
           <div className={`
             relative px-4 py-2 rounded-2xl ${colors.bubble}
             ${message.isOwn ? 'rounded-br-md' : 'rounded-bl-md'}
             break-words
           `}>
             <p className="text-sm leading-relaxed">{message.content}</p>
-            
+
             {/* Message tail/pointer */}
-            <div className={`
-              absolute bottom-0 w-3 h-3
-              ${message.isOwn ? '-right-1' : '-left-1'}
-            `}>
-              <div className={`
-                w-full h-full border-8 border-transparent
-                ${message.isOwn ? colors.tail : `border-l-gray-100`}
-              `} />
+            <div className={`absolute bottom-0 w-3 h-3 ${message.isOwn ? '-right-1' : '-left-1'}`}>
+              <div className={`w-full h-full border-8 border-transparent ${message.isOwn ? colors.tail : 'border-l-gray-100'}`} />
             </div>
           </div>
 
@@ -106,9 +88,7 @@ export function MessageBubble({ message, showSender = false }: MessageBubbleProp
         </div>
 
         {/* Spacer for own messages when no avatar */}
-        {message.isOwn && showSender && (
-          <div className="w-8" />
-        )}
+        {message.isOwn && showSender && <div className="w-8" />}
       </div>
     </div>
   );

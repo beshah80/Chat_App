@@ -4,27 +4,35 @@ import { ChatList } from '@/components/chat/ChatList';
 import { ChatWindow } from '@/components/chat/ChatWindow';
 import { useChatStore } from '@/store/chatStore';
 import { useParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 export default function ChatDetailPage() {
   const params = useParams();
-  const chatId = params.chatId as string;
-  const { isAuthenticated, setActiveChat, chats } = useChatStore();
+  const chatId = params?.chatId as string | undefined;
 
+  const { isAuthenticated, setActiveConversation, conversations } = useChatStore();
+
+  // Find the active conversation
+  const activeConversation = useMemo(() => {
+    if (!chatId) return null;
+    return conversations.find((conv) => conv.id === chatId) || null;
+  }, [chatId, conversations]);
+
+  // Set active conversation in store
   useEffect(() => {
-    if (chatId && chats.find(chat => chat.id === chatId)) {
-      setActiveChat(chatId);
+    if (chatId && activeConversation) {
+      setActiveConversation(chatId);
     }
-  }, [chatId, setActiveChat, chats]);
+  }, [chatId, activeConversation, setActiveConversation]);
 
-  if (!isAuthenticated) {
-    return null; // This will redirect via the root page
+  if (!isAuthenticated || !chatId || !activeConversation) {
+    return null; // Optionally, redirect to /chat or loading state
   }
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
       <ChatList />
-      <ChatWindow />
+      <ChatWindow conversation={activeConversation} />
     </div>
   );
 }

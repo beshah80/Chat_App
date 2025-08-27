@@ -1,17 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth';
 import { getUserConversations, prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const GET = withAuth(async (request: NextRequest, user: any) => {
   try {
     // Get conversations with message count for unread badge
     const conversations = await getUserConversations(user.id);
-    
+
     // Format conversations for frontend
     const formattedConversations = await Promise.all(conversations.map(async (conv) => {
       const otherParticipants = conv.participants.filter(p => p.userId !== user.id);
       const lastMessage = conv.messages[0];
-      
+
       // Get unread message count - for now, count messages since last read
       // In a real app, this would be based on messageStatus table
       const participant = await prisma.participant.findFirst({
@@ -20,7 +20,7 @@ export const GET = withAuth(async (request: NextRequest, user: any) => {
           conversationId: conv.id
         }
       });
-      
+
       const unreadCount = await prisma.message.count({
         where: {
           conversationId: conv.id,
@@ -30,17 +30,17 @@ export const GET = withAuth(async (request: NextRequest, user: any) => {
           }
         }
       });
-      
+
       let conversationName = conv.name;
       let conversationAvatar: string | null = null;
-      
+
       // For direct messages, use the other user's name and avatar
       if (conv.type === 'DIRECT' && otherParticipants.length > 0) {
         const otherUser = otherParticipants[0].user;
         conversationName = otherUser.name;
         conversationAvatar = otherUser.avatar;
       }
-      
+
       return {
         id: conv.id,
         name: conversationName,
@@ -82,9 +82,9 @@ export const GET = withAuth(async (request: NextRequest, user: any) => {
   } catch (error) {
     console.error('Error fetching conversations:', error);
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Failed to fetch conversations' 
+        error: 'Failed to fetch conversations'
       },
       { status: 500 }
     );

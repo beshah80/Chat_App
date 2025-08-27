@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { io, Socket } from 'socket.io-client';
 
 interface SocketContextType {
@@ -43,19 +50,23 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+
   const socketRef = useRef<Socket | null>(null);
   const joinedRoomsRef = useRef<Set<string>>(new Set());
   const sessionIdRef = useRef<string>('');
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
   const heartbeatIntervalRef = useRef<NodeJS.Timeout>();
+  const reconnectAttemptRef = useRef<number>(0);
 
   // Generate unique session ID for this browser session
   const getSessionId = useCallback((): string => {
     if (sessionIdRef.current) return sessionIdRef.current;
-    
+
     let sessionId = sessionStorage.getItem('socket-session-id');
     if (!sessionId) {
-      sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      sessionId = `session_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
       sessionStorage.setItem('socket-session-id', sessionId);
     }
     sessionIdRef.current = sessionId;
@@ -64,40 +75,33 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   const initializeSocket = useCallback(async () => {
     try {
-      // Prevent multiple socket connections
       if (socketRef.current?.connected) {
         return socketRef.current;
       }
 
-      // Initialize the socket server first
+      // Ensure server is initialized
       await fetch('/api/socket', { method: 'POST' });
-      
+
       const sessionId = getSessionId();
-      
-      // Connect to the socket server with session ID
-      const socketInstance = io(window.location.origin, {
+
+      const socketInstance: Socket = io(window.location.origin, {
         path: '/api/socket',
         transports: ['websocket', 'polling'],
-        upgrade: true,
-        forceNew: false,
-        autoConnect: true,
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
         timeout: 10000,
-        query: {
-          sessionId
-        }
+        query: { sessionId },
       });
 
       socketRef.current = socketInstance;
 
-      // Connection events
+      // Connected
       socketInstance.on('connect', () => {
-        console.log(`Connected to Socket.IO server with session: ${sessionId}`);
+        console.log(`Connected with session: ${sessionId}`);
         setIsConnected(true);
-        
-        // Start heartbeat
+        reconnectAttemptRef.current = 0;
+
         if (heartbeatIntervalRef.current) {
           clearInterval(heartbeatIntervalRef.current);
         }
@@ -105,25 +109,28 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           if (socketInstance.connected) {
             socketInstance.emit('ping');
           }
-        }, 30000); // 30 seconds
+        }, 30000);
       });
 
+      // Disconnected
       socketInstance.on('disconnect', (reason) => {
-        console.log(`Disconnected from Socket.IO server: ${reason}`);
+        console.log(`Disconnected: ${reason}`);
         setIsConnected(false);
         joinedRoomsRef.current.clear();
-        
-        // Clear heartbeat
+
         if (heartbeatIntervalRef.current) {
           clearInterval(heartbeatIntervalRef.current);
         }
       });
 
+      // Connection error
       socketInstance.on('connect_error', (error) => {
         console.error('Socket connection error:', error);
         setIsConnected(false);
-        
-        // Exponential backoff for reconnection
+
+        reconnectAttemptRef.current += 1;
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttemptRef.current), 30000);
+
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
         }
@@ -132,16 +139,16 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             console.log('Attempting to reconnect...');
             socketInstance.connect();
           }
-        }, Math.min(1000 * Math.pow(2, socketInstance.io.engine.upgradeTimeout || 1), 30000));
+        }, delay);
       });
 
       socketInstance.on('error', (error) => {
         console.error('Socket error:', error);
       });
 
-      // User status updates
+      // Track online users
       socketInstance.on('userStatus', (data: { userId: string; online: boolean }) => {
-        setOnlineUsers(prev => {
+        setOnlineUsers((prev) => {
           const newSet = new Set(prev);
           if (data.online) {
             newSet.add(data.userId);
@@ -152,9 +159,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         });
       });
 
-      // Heartbeat response
       socketInstance.on('pong', () => {
-        // Connection is alive
+        // Heartbeat OK
       });
 
       setSocket(socketInstance);
@@ -169,7 +175,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   useEffect(() => {
     initializeSocket();
 
-    // Cleanup on unmount
     return () => {
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
@@ -185,58 +190,75 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     };
   }, [initializeSocket]);
 
-  // Enhanced callback functions with better error handling
-  const joinGlobalChat = useCallback((userId: string) => {
-    if (socket && isConnected && userId && !joinedRoomsRef.current.has(`global-${userId}`)) {
-      console.log(`Joining global chat for user: ${userId}`);
-      socket.emit('joinGlobal', userId);
-      joinedRoomsRef.current.add(`global-${userId}`);
-    }
-  }, [socket, isConnected]);
+  // API methods
+  const joinGlobalChat = useCallback(
+    (userId: string) => {
+      if (socket && isConnected && userId && !joinedRoomsRef.current.has(`global-${userId}`)) {
+        socket.emit('joinGlobal', userId);
+        joinedRoomsRef.current.add(`global-${userId}`);
+      }
+    },
+    [socket, isConnected]
+  );
 
-  const joinPrivateChat = useCallback((conversationId: string) => {
-    if (socket && isConnected && conversationId && !joinedRoomsRef.current.has(`private-${conversationId}`)) {
-      console.log(`Joining private chat: ${conversationId}`);
-      socket.emit('joinPrivate', conversationId);
-      joinedRoomsRef.current.add(`private-${conversationId}`);
-    }
-  }, [socket, isConnected]);
+  const joinPrivateChat = useCallback(
+    (conversationId: string) => {
+      if (
+        socket &&
+        isConnected &&
+        conversationId &&
+        !joinedRoomsRef.current.has(`private-${conversationId}`)
+      ) {
+        socket.emit('joinPrivate', conversationId);
+        joinedRoomsRef.current.add(`private-${conversationId}`);
+      }
+    },
+    [socket, isConnected]
+  );
 
-  const sendMessage = useCallback((data: any) => {
-    if (socket && isConnected && data) {
-      socket.emit('sendMessage', data);
-    } else {
-      console.warn('Cannot send message: socket not connected or invalid data');
-    }
-  }, [socket, isConnected]);
+  const sendMessage = useCallback(
+    (data: any) => {
+      if (socket && isConnected && data) {
+        socket.emit('sendMessage', data);
+      }
+    },
+    [socket, isConnected]
+  );
 
-  const goOffline = useCallback((userId: string) => {
-    if (socket && userId) {
-      socket.emit('goOffline', userId);
-    }
-  }, [socket]);
+  const goOffline = useCallback(
+    (userId: string) => {
+      if (socket && userId) {
+        socket.emit('goOffline', userId);
+      }
+    },
+    [socket]
+  );
 
-  const startTyping = useCallback((conversationId: string, userId: string, name: string) => {
-    if (socket && isConnected && conversationId && userId && name) {
-      socket.emit('typing', { conversationId, userId, name });
-    }
-  }, [socket, isConnected]);
+  const startTyping = useCallback(
+    (conversationId: string, userId: string, name: string) => {
+      if (socket && isConnected && conversationId && userId && name) {
+        socket.emit('typing', { conversationId, userId, name });
+      }
+    },
+    [socket, isConnected]
+  );
 
-  const stopTyping = useCallback((conversationId: string, userId: string) => {
-    if (socket && isConnected && conversationId && userId) {
-      socket.emit('stopTyping', { conversationId, userId });
-    }
-  }, [socket, isConnected]);
+  const stopTyping = useCallback(
+    (conversationId: string, userId: string) => {
+      if (socket && isConnected && conversationId && userId) {
+        socket.emit('stopTyping', { conversationId, userId });
+      }
+    },
+    [socket, isConnected]
+  );
 
-  // Handle page visibility for better offline detection
+  // Handle page visibility
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden && socket?.connected) {
-        // Page is hidden, but don't disconnect immediately
-        console.log('Page hidden, maintaining connection');
+      if (document.hidden) {
+        console.log('Page hidden, keeping socket alive');
       } else if (!document.hidden && socket && !socket.connected) {
-        // Page is visible and socket is disconnected, try to reconnect
-        console.log('Page visible, attempting reconnection');
+        console.log('Page visible, reconnecting...');
         initializeSocket();
       }
     };
@@ -257,9 +279,5 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     stopTyping,
   };
 
-  return (
-    <SocketContext.Provider value={value}>
-      {children}
-    </SocketContext.Provider>
-  );
+  return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
 };

@@ -1,24 +1,29 @@
+'use client';
+
+import { AnimatePresence, motion } from 'framer-motion';
+import { Camera, Edit, LogOut, Mail, Phone, Settings, User, X } from 'lucide-react';
+import Image from 'next/image';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Edit, Settings, LogOut, User, Mail, Phone, Camera } from 'lucide-react';
+import { useChatStore } from '../../store/chatStore';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { useChatStore } from '../../store/chatStore';
 
 interface UserProfileProps {
   onClose: () => void;
 }
 
 export function UserProfile({ onClose }: UserProfileProps) {
-  const { currentUser, logout } = useChatStore();
+  const currentUser = useChatStore((state) => state.user);
+  const logout = useChatStore((state) => state.logout);
+
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(currentUser?.name || '');
   const [email, setEmail] = useState(currentUser?.email || '');
   const [phone, setPhone] = useState('+1 (555) 123-4567');
 
   const handleSave = () => {
-    // In a real app, this would update the user profile
+    // Update profile logic would go here
     setIsEditing(false);
   };
 
@@ -26,6 +31,8 @@ export function UserProfile({ onClose }: UserProfileProps) {
     logout();
     onClose();
   };
+
+  if (!currentUser) return null;
 
   return (
     <AnimatePresence>
@@ -48,11 +55,7 @@ export function UserProfile({ onClose }: UserProfileProps) {
           <div className="flex items-center justify-between p-6 border-b border-border">
             <h2 className="text-lg font-semibold text-foreground">Profile</h2>
             <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditing(!isEditing)}
-              >
+              <Button variant="ghost" size="sm" onClick={() => setIsEditing(!isEditing)}>
                 <Edit className="h-4 w-4" />
               </Button>
               <Button variant="ghost" size="sm" onClick={onClose}>
@@ -66,10 +69,12 @@ export function UserProfile({ onClose }: UserProfileProps) {
             {/* Avatar Section */}
             <div className="flex flex-col items-center space-y-4">
               <div className="relative">
-                <img
-                  src={currentUser?.avatar}
-                  alt={currentUser?.name}
-                  className="w-24 h-24 rounded-full object-cover"
+                <Image
+                  src={currentUser.avatar || '/default-avatar.png'}
+                  alt={currentUser.name}
+                  width={96}
+                  height={96}
+                  className="rounded-full object-cover"
                 />
                 {isEditing && (
                   <Button
@@ -82,10 +87,10 @@ export function UserProfile({ onClose }: UserProfileProps) {
                 )}
                 <div className="absolute bottom-2 right-2 w-4 h-4 bg-green-500 rounded-full border-2 border-card online-indicator" />
               </div>
-              
+
               {!isEditing ? (
                 <div className="text-center">
-                  <h3 className="font-semibold text-foreground">{currentUser?.name}</h3>
+                  <h3 className="font-semibold text-foreground">{currentUser.name}</h3>
                   <p className="text-sm text-muted-foreground">Online</p>
                 </div>
               ) : (
@@ -109,20 +114,16 @@ export function UserProfile({ onClose }: UserProfileProps) {
             {/* Contact Information */}
             <div className="space-y-4">
               <h4 className="font-medium text-foreground">Contact Information</h4>
-              
+
               <div className="space-y-3">
                 <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <div className="flex-1">
                     {isEditing ? (
-                      <Input
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        type="email"
-                      />
+                      <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" />
                     ) : (
                       <div>
-                        <p className="text-sm text-foreground">{currentUser?.email}</p>
+                        <p className="text-sm text-foreground">{currentUser.email}</p>
                         <p className="text-xs text-muted-foreground">Email</p>
                       </div>
                     )}
@@ -133,11 +134,7 @@ export function UserProfile({ onClose }: UserProfileProps) {
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <div className="flex-1">
                     {isEditing ? (
-                      <Input
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        type="tel"
-                      />
+                      <Input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" />
                     ) : (
                       <div>
                         <p className="text-sm text-foreground">{phone}</p>
@@ -156,11 +153,7 @@ export function UserProfile({ onClose }: UserProfileProps) {
                   <Button onClick={handleSave} className="flex-1">
                     Save Changes
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsEditing(false)}
-                    className="flex-1"
-                  >
+                  <Button variant="outline" onClick={() => setIsEditing(false)} className="flex-1">
                     Cancel
                   </Button>
                 </div>
@@ -170,8 +163,8 @@ export function UserProfile({ onClose }: UserProfileProps) {
                     <Settings className="mr-2 h-4 w-4" />
                     Settings
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={handleLogout}
                     className="w-full justify-start text-destructive hover:text-destructive"
                   >

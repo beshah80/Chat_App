@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth';
 import { searchUsers } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const GET = withAuth(async (request: NextRequest, user: any) => {
   try {

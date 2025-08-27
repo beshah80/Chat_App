@@ -3,13 +3,14 @@ import { initSocket, type NextApiResponseServerIO } from '../../lib/socket';
 
 export default function handler(req: NextApiRequest, res: NextApiResponseServerIO) {
   if (req.method === 'POST') {
-    // Initialize Socket.IO
-    const io = initSocket(res);
-    
-    res.status(200).json({ message: 'Socket.IO server initialized' });
-  } else {
-    res.status(200).json({ message: 'Socket.IO server running' });
+    // Initialize Socket.IO (no need to assign to a variable if unused)
+    initSocket(res);
+
+    return res.status(200).json({ message: 'Socket.IO server initialized' });
   }
+
+  // Default response for other methods
+  return res.status(200).json({ message: 'Socket.IO server running' });
 }
 
 // Disable body parser for WebSocket connections

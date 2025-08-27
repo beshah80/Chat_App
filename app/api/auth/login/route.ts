@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { comparePassword, generateToken } from '@/lib/auth'; // ✅ removed sanitizeUser
 import { prisma } from '@/lib/prisma';
-import { generateToken, comparePassword, sanitizeUser } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -17,13 +17,15 @@ export async function POST(request: NextRequest) {
     const { email, password } = validatedData;
 
     // Get session ID from headers for multi-user support
-    const sessionId = request.headers.get('x-session-id') || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId =
+      request.headers.get('x-session-id') ||
+      `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Find user by email
     const user = await prisma.user.findUnique({
       where: {
-        email: email.toLowerCase().trim()
-      }
+        email: email.toLowerCase().trim(),
+      },
     });
 
     if (!user) {
@@ -47,7 +49,7 @@ export async function POST(request: NextRequest) {
       where: { id: user.id },
       data: {
         isOnline: true,
-        lastSeen: new Date()
+        lastSeen: new Date(),
       },
       select: {
         id: true,
@@ -58,25 +60,25 @@ export async function POST(request: NextRequest) {
         createdAt: true,
         updatedAt: true,
         lastSeen: true,
-        isOnline: true
-      }
+        isOnline: true,
+      },
     });
 
     // Generate JWT token with session ID for uniqueness
-    const token = generateToken({ 
-      userId: user.id, 
+    const token = generateToken({
+      userId: user.id,
       email: user.email,
-      sessionId: sessionId
+      sessionId: sessionId,
     });
 
     // Return response with multiple session support
     const response = NextResponse.json(
-      { 
+      {
         success: true,
-        user: updatedUser, 
-        token, 
+        user: updatedUser,
+        token,
         sessionId,
-        message: 'Login successful' 
+        message: 'Login successful',
       },
       { status: 200 }
     );
@@ -100,7 +102,6 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

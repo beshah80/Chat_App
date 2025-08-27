@@ -1,151 +1,98 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-export const GET = withAuth(async (
-  request: NextRequest,
-  user: any,
-  { params }: { params: { conversationId: string } }
-) => {
-  try {
-    const { conversationId } = params;
-    const { searchParams } = new URL(request.url);
-    const cursor = searchParams.get('cursor');
-    const limit = parseInt(searchParams.get('limit') || '50');
-
-    // Verify user is a participant in this conversation
-    const participant = await prisma.participant.findUnique({
-      where: {
-        userId_conversationId: {
-          userId: user.id,
-          conversationId
-        }
-      }
-    });
-
-    if (!participant) {
-      return NextResponse.json(
-        { error: 'Access denied' },
-        { status: 403 }
-      );
-    }
-
-    // Build query conditions
-    const whereConditions: any = {
-      conversationId,
-      isDeleted: false
-    };
-
-    if (cursor) {
-      whereConditions.id = {
-        lt: cursor
-      };
-    }
-
-    // Fetch messages
-    const messages = await prisma.message.findMany({
-      where: whereConditions,
-      include: {
-        sender: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true
-          }
-        },
-        replyTo: {
-          include: {
-            sender: {
-              select: {
-                id: true,
-                name: true
-              }
-            }
-          }
-        },
-        messageStatus: {
-          where: {
-            userId: user.id
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: limit
-    });
-
-    // Mark messages as delivered if they haven't been already
-    const undeliveredMessages = messages.filter(msg => 
-      msg.senderId !== user.id && 
-      !msg.messageStatus.some(status => status.status === 'DELIVERED')
-    );
-
-    if (undeliveredMessages.length > 0) {
-      await Promise.all(
-        undeliveredMessages.map(msg =>
-          prisma.messageStatus.upsert({
-            where: {
-              messageId_userId: {
-                messageId: msg.id,
-                userId: user.id
-              }
-            },
-            update: {
-              status: 'DELIVERED',
-              timestamp: new Date()
-            },
-            create: {
-              messageId: msg.id,
-              userId: user.id,
-              status: 'DELIVERED'
-            }
-          })
-        )
-      );
-    }
-
-    // Format messages for frontend
-    const formattedMessages = messages.map(msg => ({
-      id: msg.id,
-      content: msg.content,
-      type: msg.type,
-      senderId: msg.senderId,
-      senderName: msg.sender.name,
-      conversationId: msg.conversationId,
-      timestamp: msg.createdAt,
-      createdAt: msg.createdAt,
-      updatedAt: msg.updatedAt,
-      status: msg.messageStatus[0]?.status === 'READ' ? 'read' : 
-              msg.messageStatus[0]?.status === 'DELIVERED' ? 'delivered' : 'sent',
-      isOwn: msg.senderId === user.id
-    })).reverse(); // Reverse to show oldest first
-
-    // Update participant's last read timestamp
-    await prisma.participant.update({
-      where: {
-        userId_conversationId: {
-          userId: user.id,
-          conversationId
-        }
-      },
-      data: {
-        lastReadAt: new Date()
-      }
-    });
-
-    return NextResponse.json({
-      messages: formattedMessages,
-      hasMore: messages.length === limit,
-      nextCursor: messages.length > 0 ? messages[messages.length - 1].id : null
-    });
-
-  } catch (error) {
-    console.error('Error fetching messages:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch messages' },
-      { status: 500 }
-    );
-  }
+const sendMessageSchema = z.object({
+  content: z.string().min(1, 'Message content is required').max(4000, 'Message too long'),
+  type: z.enum(['TEXT', 'IMAGE', 'FILE']).default('TEXT'),
+  replyToId: z.string().optional(),
 });
+
+export const POST = withAuth(
+  async (request: NextRequest, user: any, params: { conversationId: string }) => {
+    try {
+      const { conversationId } = params;
+      const body = await request.json();
+
+      const { content, type, replyToId } = sendMessageSchema.parse(body);
+
+      const participant = await prisma.participant.findUnique({
+        where: { userId_conversationId: { userId: user.id, conversationId } },
+      });
+
+      if (!participant) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      }
+
+      if (replyToId) {
+        const replyToMessage = await prisma.message.findFirst({
+          where: { id: replyToId, conversationId },
+        });
+        if (!replyToMessage) {
+          return NextResponse.json({ error: 'Reply-to message not found' }, { status: 400 });
+        }
+      }
+
+      const message = await prisma.message.create({
+        data: {
+          content,
+          type,
+          senderId: user.id,
+          conversationId,
+          replyToId: replyToId || null,
+        },
+        include: {
+          sender: { select: { id: true, name: true, email: true, avatar: true } },
+          replyTo: { include: { sender: { select: { id: true, name: true } } } },
+        },
+      });
+
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: { lastMessageAt: new Date() },
+      });
+
+      await prisma.messageStatus.create({
+        data: { messageId: message.id, userId: user.id, status: 'SENT' },
+      });
+
+      const otherParticipants = await prisma.participant.findMany({
+        where: { conversationId, userId: { not: user.id } },
+        select: { userId: true },
+      });
+
+      if (otherParticipants.length > 0) {
+        await prisma.messageStatus.createMany({
+          data: otherParticipants.map((p) => ({
+            messageId: message.id,
+            userId: p.userId,
+            status: 'DELIVERED' as const,
+          })),
+        });
+      }
+
+      const formattedMessage = {
+        id: message.id,
+        content: message.content,
+        type: message.type,
+        senderId: message.senderId,
+        senderName: message.sender.name,
+        conversationId: message.conversationId,
+        timestamp: message.createdAt,
+        createdAt: message.createdAt,
+        status: 'sent',
+        isOwn: true,
+      };
+
+      return NextResponse.json({ message: formattedMessage }, { status: 201 });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json({ error: 'Validation error', details: error.flatten() }, { status: 400 });
+      }
+
+      console.error('Error sending message:', error);
+      return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
+    }
+  }
+);

@@ -1,3 +1,6 @@
+// types.ts
+
+// =================== User Types ===================
 export interface User {
   id: string;
   name: string;
@@ -22,21 +25,21 @@ export interface Participant {
 export interface Message {
   id: string;
   content: string;
-  type: 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM';
+  type: "TEXT" | "IMAGE" | "FILE" | "SYSTEM";
   senderId: string;
   senderName: string;
   conversationId: string;
   timestamp: Date | string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
-  status: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+  status: "sending" | "sent" | "delivered" | "read" | "failed";
   isOwn?: boolean;
 }
 
 export interface Conversation {
   id: string;
   name?: string;
-  type: 'DIRECT' | 'GROUP' | 'GLOBAL';
+  type: "DIRECT" | "GROUP" | "GLOBAL";
   isGlobal: boolean;
   avatar?: string;
   participants: Participant[];
@@ -72,14 +75,15 @@ export interface ConversationWithMessages extends Conversation {
   messages: Message[];
 }
 
+// =================== Requests ===================
 export interface CreateConversationRequest {
   userId: string;
-  type?: 'DIRECT' | 'GROUP';
+  type?: "DIRECT" | "GROUP";
 }
 
 export interface SendMessageRequest {
   content: string;
-  type?: 'TEXT' | 'IMAGE' | 'FILE';
+  type?: "TEXT" | "IMAGE" | "FILE";
   conversationId: string;
 }
 
@@ -90,6 +94,7 @@ export interface UpdateProfileRequest {
   avatar?: string;
 }
 
+// =================== Realtime Events ===================
 export interface TypingIndicator {
   userId: string;
   conversationId: string;
@@ -110,45 +115,51 @@ export interface MessageStatus {
   deliveredAt?: Date | string;
 }
 
-// Socket event types
+// =================== Socket Events ===================
 export interface SocketEvents {
   // Joining rooms
-  'join-conversation': { conversationId: string };
-  'leave-conversation': { conversationId: string };
-  
+  "join-conversation": { conversationId: string };
+  "leave-conversation": { conversationId: string };
+
   // Messaging
-  'send-message': SendMessageRequest;
-  'message-sent': { message: Message };
-  'new-message': { message: Message };
-  
+  "send-message": SendMessageRequest;
+  "message-sent": { message: Message };
+  "new-message": { message: Message };
+
   // Typing indicators
-  'typing-start': { conversationId: string; userId: string };
-  'typing-stop': { conversationId: string; userId: string };
-  'user-typing': { conversationId: string; userId: string; userName: string };
-  'user-stopped-typing': { conversationId: string; userId: string };
-  
+  "typing-start": { conversationId: string; userId: string };
+  "typing-stop": { conversationId: string; userId: string };
+  "user-typing": { conversationId: string; userId: string; userName: string };
+  "user-stopped-typing": { conversationId: string; userId: string };
+
   // Online status
-  'user-online': { userId: string };
-  'user-offline': { userId: string; lastSeen: Date };
-  
+  "user-online": { userId: string };
+  "user-offline": { userId: string; lastSeen: Date };
+
   // Message status
-  'message-delivered': { messageId: string; conversationId: string };
-  'message-read': { messageId: string; conversationId: string };
-  
+  "message-delivered": { messageId: string; conversationId: string };
+  "message-read": { messageId: string; conversationId: string };
+
   // Conversation updates
-  'conversation-updated': { conversation: Conversation };
-  'new-conversation': { conversation: Conversation };
-  
+  "conversation-updated": { conversation: Conversation };
+  "new-conversation": { conversation: Conversation };
+
   // Error handling
-  'error': { message: string; code?: string };
+  error: { message: string; code?: string };
 }
 
-// Utility types
-export type MessageWithoutId = Omit<Message, 'id' | 'createdAt' | 'updatedAt'>;
-export type ConversationWithoutId = Omit<Conversation, 'id' | 'createdAt' | 'updatedAt'>;
-export type UserWithoutPassword = Omit<User, 'password'>;
+// =================== Utility Types ===================
+export type MessageWithoutId = Omit<
+  Message,
+  "id" | "createdAt" | "updatedAt"
+>;
+export type ConversationWithoutId = Omit<
+  Conversation,
+  "id" | "createdAt" | "updatedAt"
+>;
+export type UserWithoutPassword = Omit<User, "password">;
 
-// Form types
+// =================== Form Types ===================
 export interface LoginFormData {
   email: string;
   password: string;
@@ -162,10 +173,10 @@ export interface RegisterFormData {
 
 export interface MessageFormData {
   content: string;
-  type: 'TEXT' | 'IMAGE' | 'FILE';
+  type: "TEXT" | "IMAGE" | "FILE";
 }
 
-// API endpoint response types
+// =================== API Responses ===================
 export interface ConversationsResponse {
   conversations: Conversation[];
   total: number;
@@ -186,7 +197,16 @@ export interface CreateConversationResponse {
   conversation: Conversation;
   isNew: boolean;
 }
-</type>
 
-<figma type="work">
-Finally, I need to ensure the utility function file exists for the cn() function.
+// =================== Utility Function ===================
+// utils/cn.ts
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+/**
+ * Merge conditional classNames with Tailwind support
+ * Usage: cn("px-4", isActive && "bg-blue-500")
+ */
+export function cn(...inputs: (string | undefined | null | false)[]) {
+  return twMerge(clsx(inputs));
+}

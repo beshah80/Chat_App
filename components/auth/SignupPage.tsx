@@ -1,5 +1,5 @@
+import { Check, Eye, EyeOff, Loader2, MessageCircle, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { MessageCircle, Eye, EyeOff, Loader2, Check, X } from 'lucide-react';
 
 interface SignupPageProps {
   onSignup: (name: string, email: string, password: string) => Promise<boolean>;
@@ -25,18 +25,16 @@ export function SignupPage({ onSignup, onNavigate }: SignupPageProps) {
       ...prev,
       [name]: value
     }));
-    // Clear error when user types
     if (error) setError('');
   };
 
   const validatePassword = (password: string) => {
-    const checks = {
+    return {
       length: password.length >= 8,
       uppercase: /[A-Z]/.test(password),
       lowercase: /[a-z]/.test(password),
       number: /\d/.test(password)
     };
-    return checks;
   };
 
   const passwordChecks = validatePassword(formData.password);
@@ -80,13 +78,11 @@ export function SignupPage({ onSignup, onNavigate }: SignupPageProps) {
 
     try {
       const success = await onSignup(formData.name.trim(), formData.email, formData.password);
-      
       if (!success) {
         setError('Failed to create account. Please try again.');
       }
-    } catch (error) {
-      console.error('Signup error:', error);
-      setError('Network error. Please try again.');
+    } catch {
+      setError('Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -173,15 +169,10 @@ export function SignupPage({ onSignup, onNavigate }: SignupPageProps) {
                   disabled={isLoading}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
               
-              {/* Password requirements */}
               {formData.password && (
                 <div className="text-xs space-y-1 mt-2">
                   <div className={`flex items-center gap-2 ${passwordChecks.length ? 'text-green-600' : 'text-gray-500'}`}>
@@ -226,11 +217,7 @@ export function SignupPage({ onSignup, onNavigate }: SignupPageProps) {
                   disabled={isLoading}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
               {formData.confirmPassword && formData.password !== formData.confirmPassword && (
@@ -251,9 +238,7 @@ export function SignupPage({ onSignup, onNavigate }: SignupPageProps) {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating Account...
                 </>
-              ) : (
-                'Create Account'
-              )}
+              ) : 'Create Account'}
             </button>
           </form>
 

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { Globe, Heart, MessageCircle, Shield, Users, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { AuthForm, type AuthFormData } from './auth/AuthForm';
-import { MessageCircle, Users, Shield, Zap, Globe, Heart } from 'lucide-react';
+import { Button } from './ui/button';
+import { Card, CardDescription, CardHeader, CardTitle } from './ui/card';
 
 export function HomePage() {
   const router = useRouter();
@@ -32,7 +32,6 @@ export function HomePage() {
 
     try {
       let result;
-      
       if (authMode === 'login') {
         result = await login(data.email, data.password);
       } else {
@@ -40,12 +39,11 @@ export function HomePage() {
       }
 
       if (result.success) {
-        // Navigate to chat after successful authentication
         router.push('/chat');
       } else {
         setError(result.error || 'Authentication failed');
       }
-    } catch (err) {
+    } catch {
       setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
@@ -71,24 +69,30 @@ export function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-200 via-pink-300 to-teal-300 font-sans">
       {/* Header */}
-      <header className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <nav className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <MessageCircle className="w-6 h-6 text-white" />
+      <header className="sticky top-0 z-50 bg-pink-50/90 backdrop-blur-lg border-b border-yellow-300/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+          <nav className="flex items-center justify-between flex-col sm:flex-row gap-4 sm:gap-0">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-pink-600 rounded-full flex items-center justify-center shadow-lg">
+                <MessageCircle className="w-7 h-7 text-white" strokeWidth={2.5} />
               </div>
-              <span className="text-xl font-bold text-gray-900">ChatApp</span>
+              <span className="text-2xl font-extrabold text-pink-800 tracking-tight bg-gradient-to-r from-yellow-400 to-pink-600 bg-clip-text text-transparent">
+                ChatApp
+              </span>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={handleSignIn}>
+              <Button 
+                variant="ghost" 
+                onClick={handleSignIn} 
+                className="text-base font-semibold text-pink-700 hover:text-pink-900 hover:bg-yellow-100/50 px-6 py-2.5 rounded-full transition-all duration-300"
+              >
                 Sign In
               </Button>
               <Button 
                 onClick={handleGetStarted}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                className="bg-gradient-to-r from-yellow-400 to-pink-600 hover:from-yellow-500 hover:to-pink-700 text-white font-semibold px-7 py-2.5 rounded-full shadow-md hover:shadow-lg transition-all duration-300"
               >
                 Get Started
               </Button>
@@ -98,34 +102,34 @@ export function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative py-20 lg:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative py-24 lg:py-36 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(251,113,133,0.15),transparent_60%)] z-0" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-8">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-pink-800 mb-8 tracking-tight leading-tight">
               Connect with{' '}
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Everyone
+              <span className="bg-gradient-to-r from-yellow-400 to-pink-600 bg-clip-text text-transparent">
+                the World
               </span>
             </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
-              Experience seamless real-time messaging with our modern chat platform. 
-              Join global conversations, create private chats, and stay connected with friends and colleagues.
+            <p className="text-xl text-pink-600 mb-12 max-w-3xl mx-auto leading-relaxed font-medium">
+              Dive into real-time messaging with a vibrant platform designed for global communities, private chats, and seamless connections.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg"
                 onClick={handleGetStarted}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-lg px-8 py-3"
+                className="bg-gradient-to-r from-yellow-400 to-pink-600 hover:from-yellow-500 hover:to-pink-700 text-white font-semibold px-9 py-3.5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
               >
-                Start Chatting Now
+                Start Chatting
               </Button>
               <Button 
                 size="lg" 
                 variant="outline"
                 onClick={handleSignIn}
-                className="text-lg px-8 py-3"
+                className="text-pink-700 border-pink-300 hover:bg-yellow-100/50 font-semibold px-9 py-3.5 rounded-full transition-all duration-300"
               >
-                Sign In
+                Log In
               </Button>
             </div>
           </div>
@@ -133,86 +137,86 @@ export function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-yellow-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Why Choose ChatApp?
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-pink-800 mb-4 tracking-tight">
+              Why ChatApp?
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Built with modern technology and designed for the best user experience
+            <p className="text-xl text-pink-600 max-w-2xl mx-auto leading-relaxed font-medium">
+              A modern, secure platform crafted for exceptional communication experiences.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                  <Globe className="w-6 h-6 text-blue-600" />
+            <Card className="border-none shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 rounded-2xl bg-pink-50">
+              <CardHeader className="p-6">
+                <div className="w-14 h-14 bg-yellow-200 rounded-full flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <Globe className="w-7 h-7 text-pink-600" strokeWidth={2.5} />
                 </div>
-                <CardTitle>Global Chat Room</CardTitle>
-                <CardDescription>
-                  Join a vibrant global community where everyone can connect and share ideas together.
+                <CardTitle className="text-xl font-semibold text-pink-800 mb-2">Global Communities</CardTitle>
+                <CardDescription className="text-pink-600 leading-relaxed">
+                  Engage with a worldwide community in lively, open chat rooms.
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-purple-600" />
+            <Card className="border-none shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 rounded-2xl bg-pink-50">
+              <CardHeader className="p-6">
+                <div className="w-14 h-14 bg-teal-200 rounded-full flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <Users className="w-7 h-7 text-teal-600" strokeWidth={2.5} />
                 </div>
-                <CardTitle>Private Messaging</CardTitle>
-                <CardDescription>
-                  Have one-on-one conversations with friends, colleagues, or new connections you discover.
+                <CardTitle className="text-xl font-semibold text-pink-800 mb-2">Private Chats</CardTitle>
+                <CardDescription className="text-pink-600 leading-relaxed">
+                  Connect privately with friends or new contacts in secure conversations.
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                  <Zap className="w-6 h-6 text-green-600" />
+            <Card className="border-none shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 rounded-2xl bg-pink-50">
+              <CardHeader className="p-6">
+                <div className="w-14 h-14 bg-lime-200 rounded-full flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <Zap className="w-7 h-7 text-lime-600" strokeWidth={2.5} />
                 </div>
-                <CardTitle>Real-time Updates</CardTitle>
-                <CardDescription>
-                  Experience instant messaging with real-time delivery, read receipts, and online presence.
+                <CardTitle className="text-xl font-semibold text-pink-800 mb-2">Instant Messaging</CardTitle>
+                <CardDescription className="text-pink-600 leading-relaxed">
+                  Enjoy real-time messaging with instant delivery and notifications.
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader>
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
-                  <Shield className="w-6 h-6 text-red-600" />
+            <Card className="border-none shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 rounded-2xl bg-pink-50">
+              <CardHeader className="p-6">
+                <div className="w-14 h-14 bg-orange-200 rounded-full flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <Shield className="w-7 h-7 text-orange-600" strokeWidth={2.5} />
                 </div>
-                <CardTitle>Secure & Private</CardTitle>
-                <CardDescription>
-                  Your conversations are protected with enterprise-grade security and encryption.
+                <CardTitle className="text-xl font-semibold text-pink-800 mb-2">Secure & Private</CardTitle>
+                <CardDescription className="text-pink-600 leading-relaxed">
+                  Your conversations are protected with advanced encryption protocols.
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader>
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
-                  <MessageCircle className="w-6 h-6 text-yellow-600" />
+            <Card className="border-none shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 rounded-2xl bg-pink-50">
+              <CardHeader className="p-6">
+                <div className="w-14 h-14 bg-yellow-200 rounded-full flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <MessageCircle className="w-7 h-7 text-yellow-600" strokeWidth={2.5} />
                 </div>
-                <CardTitle>User Search</CardTitle>
-                <CardDescription>
-                  Easily find and connect with other users by searching their name or email address.
+                <CardTitle className="text-xl font-semibold text-pink-800 mb-2">User Discovery</CardTitle>
+                <CardDescription className="text-pink-600 leading-relaxed">
+                  Easily find and connect with users by name or email address.
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader>
-                <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mb-4">
-                  <Heart className="w-6 h-6 text-pink-600" />
+            <Card className="border-none shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 rounded-2xl bg-pink-50">
+              <CardHeader className="p-6">
+                <div className="w-14 h-14 bg-pink-300 rounded-full flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <Heart className="w-7 h-7 text-pink-600" strokeWidth={2.5} />
                 </div>
-                <CardTitle>Modern Design</CardTitle>
-                <CardDescription>
-                  Beautiful, responsive interface that works seamlessly across all your devices.
+                <CardTitle className="text-xl font-semibold text-pink-800 mb-2">Vibrant Design</CardTitle>
+                <CardDescription className="text-pink-600 leading-relaxed">
+                  A stunning, responsive interface that shines on every device.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -221,18 +225,19 @@ export function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-500 to-purple-600">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-white mb-8">
-            Ready to Start Chatting?
+      <section className="py-20 bg-gradient-to-r from-yellow-400 to-pink-600 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,245,235,0.2),transparent_50%)] z-0" />
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8 relative z-10">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-pink-800 mb-8 tracking-tight">
+            Ready to Join the Chat?
           </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Join thousands of users already connecting on ChatApp. Create your account today and start your first conversation.
+          <p className="text-xl text-white mb-10 max-w-3xl mx-auto leading-relaxed font-medium">
+            Join thousands of users on ChatApp. Create your account today and spark your first conversation.
           </p>
           <Button 
             size="lg"
             onClick={handleGetStarted}
-            className="bg-white text-blue-600 hover:bg-gray-50 text-lg px-8 py-3"
+            className="bg-pink-50 text-pink-900 hover:bg-yellow-100 font-semibold px-9 py-3.5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
           >
             Create Your Account
           </Button>
@@ -240,17 +245,17 @@ export function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-pink-900 text-pink-100 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <MessageCircle className="w-4 h-4 text-white" />
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-pink-600 rounded-full flex items-center justify-center shadow-md">
+                <MessageCircle className="w-5 h-5 text-white" strokeWidth={2.5} />
               </div>
-              <span className="text-lg font-semibold">ChatApp</span>
+              <span className="text-lg font-semibold tracking-tight">ChatApp</span>
             </div>
-            <p className="text-gray-400 text-center md:text-right">
-              © 2024 ChatApp. Built with Next.js, TypeScript, and PostgreSQL.
+            <p className="text-pink-200 text-sm text-center md:text-right font-medium">
+              © 2025 ChatApp. Built with Next.js, TypeScript, and PostgreSQL.
             </p>
           </div>
         </div>

@@ -1,25 +1,33 @@
+// app/api/auth/register/route.ts
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma, addUserToGlobalChat } from '@/lib/prisma';
-import { hashPassword, generateToken } from '@/lib/auth';
-import { z } from 'zod';
 
-const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
+const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    
+    const { name, email, password } = await request.json();
+
     // Validate input
-    const validatedData = registerSchema.parse(body);
-    const { name, email, password } = validatedData;
+    if (!name || !email || !password) {
+      return NextResponse.json(
+        { error: 'Name, email, and password are required' },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: 'Password must be at least 6 characters long' },
+        { status: 400 }
+      );
+    }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email: email.toLowerCase() },
     });
 
     if (existingUser) {
@@ -30,60 +38,59 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create user
     const user = await prisma.user.create({
       data: {
         name,
-        email,
+        email: email.toLowerCase(),
         password: hashedPassword,
-        isOnline: true
+        isOnline: true,
+        lastSeen: new Date(),
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatar: true,
-        bio: true,
-        createdAt: true
-      }
     });
 
-    // Add user to global chat
-    await addUserToGlobalChat(user.id);
-
-    // Generate JWT token
-    const token = generateToken({
-      userId: user.id,
-      email: user.email
+    // Find or create global conversation
+    let globalConversation = await prisma.conversation.findFirst({
+      where: { isGlobal: true },
     });
 
-    // Create response with user data
-    const response = NextResponse.json({
-      user,
-      token,
-      message: 'User created successfully'
-    }, { status: 201 });
-
-    // Set HTTP-only cookie for additional security
-    response.cookies.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7 // 7 days
-    });
-
-    return response;
-
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
-        { status: 400 }
-      );
+    if (!globalConversation) {
+      globalConversation = await prisma.conversation.create({
+        data: {
+          isGlobal: true,
+          name: 'Global Chat',
+          type: 'GROUP',
+        },
+      });
     }
 
+    // Add user to global conversation
+    await prisma.conversation.update({
+      where: { id: globalConversation.id },
+      data: {
+        participants: {
+          connect: { id: user.id },
+        },
+      },
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET!,
+      { expiresIn: '7d' }
+    );
+
+    // Remove password from returned user (fix ESLint warning)
+    const { password: _, ...safeUser } = user;
+
+    return NextResponse.json({
+      token,
+      user: safeUser,
+    });
+  } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { verifyToken } from '@/lib/auth'; // ✅ removed sanitizeUser
 import { prisma } from '@/lib/prisma';
-import { verifyToken, sanitizeUser } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
     const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-    
+
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     // Get user from database
     const user = await prisma.user.findUnique({
       where: {
-        id: payload.userId
+        id: payload.userId,
       },
       select: {
         id: true,
@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
         createdAt: true,
         updatedAt: true,
         lastSeen: true,
-        isOnline: true
-      }
+        isOnline: true,
+      },
     });
 
     if (!user) {
@@ -42,8 +42,8 @@ export async function GET(request: NextRequest) {
       where: { id: user.id },
       data: {
         lastSeen: new Date(),
-        isOnline: true
-      }
+        isOnline: true,
+      },
     });
 
     return NextResponse.json({
@@ -51,10 +51,9 @@ export async function GET(request: NextRequest) {
       user: {
         ...user,
         lastSeen: new Date(),
-        isOnline: true
-      }
+        isOnline: true,
+      },
     });
-
   } catch (error) {
     console.error('Auth verification error:', error);
     return NextResponse.json(
@@ -68,7 +67,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-    
+
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -99,13 +98,13 @@ export async function PUT(request: NextRequest) {
     // Update user
     const updatedUser = await prisma.user.update({
       where: {
-        id: payload.userId
+        id: payload.userId,
       },
       data: {
         ...(name && { name: name.trim() }),
         ...(bio !== undefined && { bio: bio.trim() || null }),
         ...(avatar !== undefined && { avatar }),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       select: {
         id: true,
@@ -116,16 +115,15 @@ export async function PUT(request: NextRequest) {
         createdAt: true,
         updatedAt: true,
         lastSeen: true,
-        isOnline: true
-      }
+        isOnline: true,
+      },
     });
 
     return NextResponse.json({
       success: true,
       user: updatedUser,
-      message: 'Profile updated successfully'
+      message: 'Profile updated successfully',
     });
-
   } catch (error) {
     console.error('Profile update error:', error);
     return NextResponse.json(

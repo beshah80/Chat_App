@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { AuthForm, type AuthFormData } from '../../../components/auth/AuthForm';
 
 export default function SignupPage() {
@@ -27,13 +27,15 @@ export default function SignupPage() {
       if (response.ok) {
         // Store token in localStorage
         localStorage.setItem('auth-token', result.token);
-        
+
         // Redirect to chat
         router.push('/chat');
       } else {
         setError(result.error || 'Registration failed');
       }
-    } catch (err) {
+    } catch {
+      // The `catch` block now handles the error without needing the error variable,
+      // resolving the linting warning about an unused variable.
       setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);

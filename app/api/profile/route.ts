@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 const updateProfileSchema = z.object({
@@ -13,7 +13,7 @@ const updateProfileSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-    
+
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-    
+
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -70,7 +70,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     // Validate input
     const validatedData = updateProfileSchema.parse(body);
 
@@ -79,9 +79,7 @@ export async function PUT(request: NextRequest) {
       const existingUser = await prisma.user.findFirst({
         where: {
           email: validatedData.email.toLowerCase().trim(),
-          NOT: {
-            id: payload.userId
-          }
+          NOT: { id: payload.userId }
         }
       });
 
@@ -93,8 +91,14 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Prepare update data
-    const updateData: any = {
+    // Prepare update data with proper typing
+    const updateData: Partial<{
+      name: string;
+      email: string;
+      bio: string | null;
+      avatar: string | null;
+      updatedAt: Date;
+    }> = {
       updatedAt: new Date()
     };
 

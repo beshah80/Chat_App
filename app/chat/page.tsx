@@ -1,12 +1,30 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { ChatInterface } from '../../components/chat/ChatInterface';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
-import { ChatInterface } from '../../components/chat/ChatInterface';
-import { Loader2 } from 'lucide-react';
-import type { Conversation } from '../../types/chat';
+import type { User as ChatUser, Conversation } from '../../types/chat';
+
+// Incoming user type from API / context
+type IncomingUser = Partial<ChatUser> & { avatar?: string | null };
+
+// Normalize user: convert null avatar to undefined
+function normalizeUser(user: IncomingUser): ChatUser {
+  return {
+    id: user.id!,
+    name: user.name!,
+    email: user.email!,
+    avatar: user.avatar ?? undefined,
+    bio: user.bio ?? undefined,
+    isOnline: user.isOnline ?? false,
+    lastSeen: user.lastSeen ?? new Date(),
+    createdAt: user.createdAt ?? new Date(),
+    updatedAt: user.updatedAt ?? new Date(),
+  };
+}
 
 export default function ChatPage() {
   const router = useRouter();
@@ -19,25 +37,21 @@ export default function ChatPage() {
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/');
-    }
+    if (!authLoading && !isAuthenticated) router.push('/');
   }, [authLoading, isAuthenticated, router]);
 
-  // Join global chat when user is authenticated (only once)
+  // Join global chat once
   useEffect(() => {
     if (user && isAuthenticated && !hasJoinedGlobalRef.current) {
-      console.log(`Attempting to join global chat for user: ${user.id}`);
-      joinGlobalChat(user.id);
+      const normalized = normalizeUser(user as IncomingUser);
+      joinGlobalChat(normalized.id);
       hasJoinedGlobalRef.current = true;
     }
-  }, [user, isAuthenticated]); // Removed joinGlobalChat from dependencies
+  }, [user, isAuthenticated, joinGlobalChat]);
 
-  // Reset join flag when user changes
+  // Reset join flag if user changes
   useEffect(() => {
-    if (!user || !isAuthenticated) {
-      hasJoinedGlobalRef.current = false;
-    }
+    if (!user || !isAuthenticated) hasJoinedGlobalRef.current = false;
   }, [user, isAuthenticated]);
 
   // Fetch conversations
@@ -48,7 +62,6 @@ export default function ChatPage() {
       try {
         setIsLoadingConversations(true);
         const token = localStorage.getItem('auth-token');
-        
         if (!token) {
           setError('No authentication token found');
           return;
@@ -56,7 +69,7 @@ export default function ChatPage() {
 
         const response = await fetch('/api/conversations', {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
@@ -64,26 +77,17 @@ export default function ChatPage() {
         if (response.ok) {
           const data = await response.json();
           setConversations(data.conversations || []);
-          setError(null); // Clear any previous errors
+          setError(null);
         } else {
-          if (response.status === 404) {
-            // API endpoint not found, continue without conversations
-            console.warn('Conversations API not available yet');
-            setConversations([]);
-            setError(null);
-          } else {
-            try {
-              const errorData = await response.json();
-              setError(errorData.error || 'Failed to fetch conversations');
-            } catch {
-              setError('Failed to fetch conversations');
-            }
+          try {
+            const errorData = await response.json();
+            setError(errorData.error || 'Failed to fetch conversations');
+          } catch {
+            setError('Failed to fetch conversations');
           }
         }
-      } catch (error) {
-        console.error('Error fetching conversations:', error);
-        // Don't show error for network issues, just log them
-        console.warn('Conversations will be loaded when API is available');
+      } catch (err) {
+        console.error('Error fetching conversations:', err);
         setConversations([]);
         setError(null);
       } finally {
@@ -91,37 +95,33 @@ export default function ChatPage() {
       }
     };
 
-    if (user && isAuthenticated) {
-      fetchConversations();
-    }
+    if (user && isAuthenticated) fetchConversations();
   }, [user, isAuthenticated]);
 
   const handleLogout = async () => {
     try {
       await logout();
-      hasJoinedGlobalRef.current = false; // Reset join flag on logout
+      hasJoinedGlobalRef.current = false;
       router.push('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Force logout even if API call fails
+    } catch (err) {
+      console.error('Logout error:', err);
       hasJoinedGlobalRef.current = false;
       router.push('/');
     }
   };
 
-  // Show loading while authenticating
-  if (authLoading) {
+  // Loading / redirect UI
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-          <p className="text-gray-600">Authenticating...</p>
+          <p className="text-gray-600">{authLoading ? 'Authenticating...' : 'Redirecting...'}</p>
         </div>
       </div>
     );
   }
 
-  // Show loading while fetching conversations
   if (isLoadingConversations && isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -133,19 +133,6 @@ export default function ChatPage() {
     );
   }
 
-  // Redirect if not authenticated (this should be handled by the useEffect above)
-  if (!isAuthenticated || !user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-          <p className="text-gray-600">Redirecting...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state (only for critical errors)
   if (error && error.includes('authentication')) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -166,12 +153,13 @@ export default function ChatPage() {
     );
   }
 
+  const normalizedUser = normalizeUser(user as IncomingUser);
+
   return (
-    <ChatInterface 
-      user={user} 
-      conversations={conversations} 
+    <ChatInterface
+      user={normalizedUser}
+      conversations={conversations}
       onLogout={handleLogout}
-      onConversationsUpdate={setConversations}
     />
   );
 }

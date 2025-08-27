@@ -1,10 +1,12 @@
+'use client';
+
+import { motion } from 'framer-motion';
+import { Eye, EyeOff, Loader2, MessageCircle, User as UserIcon } from 'lucide-react';
 import { useState } from 'react';
-import { motion } from 'motion/react';
-import { Eye, EyeOff, MessageCircle, Loader2, User } from 'lucide-react';
+import { useChatStore } from '../store/chatStore';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { useChatStore } from '../store/chatStore';
 
 type AuthMode = 'login' | 'signup';
 
@@ -18,13 +20,13 @@ export function Auth({ mode, onSwitchMode }: AuthProps) {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  
+
   const { login, signup } = useChatStore();
 
   const validateForm = () => {
@@ -62,24 +64,46 @@ export function Auth({ mode, onSwitchMode }: AuthProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setLoading(true);
-    const success = mode === 'login' 
-      ? await login(formData.email, formData.password)
-      : await signup(formData.name, formData.email, formData.password);
-    setLoading(false);
 
-    if (!success) {
-      setErrors({ [mode === 'login' ? 'password' : 'email']: 
-        mode === 'login' ? 'Invalid email or password' : 'Account creation failed' 
+    try {
+      const user = {
+        id: crypto.randomUUID(),
+        name: formData.name,
+        email: formData.email,
+        password: formData.password, // store securely in DB in real apps
+        avatar: undefined,
+        bio: undefined,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastSeen: new Date(),
+        isOnline: true,
+      };
+    
+      const token = crypto.randomUUID();
+
+      if (mode === 'login') {
+        login(user, token);
+      } else {
+        signup(user, token);
+      }
+
+      setErrors({});
+    } catch {
+      setErrors({
+        [mode === 'login' ? 'password' : 'email']:
+          mode === 'login' ? 'Invalid email or password' : 'Account creation failed',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const updateFormData = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -96,7 +120,7 @@ export function Auth({ mode, onSwitchMode }: AuthProps) {
             className="mx-auto h-16 w-16 bg-primary rounded-full flex items-center justify-center mb-4"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 300 }}
           >
             <MessageCircle className="h-8 w-8 text-white" />
           </motion.div>
@@ -104,10 +128,7 @@ export function Auth({ mode, onSwitchMode }: AuthProps) {
             {mode === 'login' ? 'Welcome back' : 'Create account'}
           </h1>
           <p className="text-muted-foreground mt-2">
-            {mode === 'login' 
-              ? 'Sign in to your account to continue' 
-              : 'Join our chat community today'
-            }
+            {mode === 'login' ? 'Sign in to your account to continue' : 'Join our chat community today'}
           </p>
         </div>
 
@@ -131,7 +152,7 @@ export function Auth({ mode, onSwitchMode }: AuthProps) {
                   placeholder="Enter your full name"
                   className={`${errors.name ? 'border-destructive' : ''} pl-10`}
                 />
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
               {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
             </div>
@@ -166,11 +187,7 @@ export function Auth({ mode, onSwitchMode }: AuthProps) {
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                )}
+                {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
               </button>
             </div>
             {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
@@ -193,60 +210,14 @@ export function Auth({ mode, onSwitchMode }: AuthProps) {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                 </button>
               </div>
               {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
             </div>
           )}
 
-          {mode === 'login' && (
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="rounded border-border text-primary focus:ring-primary"
-                />
-                <span className="ml-2 text-sm text-muted-foreground">Remember me</span>
-              </label>
-              <button
-                type="button"
-                className="text-sm text-primary hover:underline"
-              >
-                Forgot password?
-              </button>
-            </div>
-          )}
-
-          {mode === 'signup' && (
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="terms"
-                className="rounded border-border text-primary focus:ring-primary"
-              />
-              <label htmlFor="terms" className="ml-2 text-sm text-muted-foreground">
-                I agree to the{' '}
-                <button type="button" className="text-primary hover:underline">
-                  Terms of Service
-                </button>{' '}
-                and{' '}
-                <button type="button" className="text-primary hover:underline">
-                  Privacy Policy
-                </button>
-              </label>
-            </div>
-          )}
-
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -261,29 +232,12 @@ export function Auth({ mode, onSwitchMode }: AuthProps) {
         {/* Switch Mode */}
         <div className="text-center">
           <p className="text-muted-foreground">
-            {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
-            <button
-              onClick={() => onSwitchMode(mode === 'login' ? 'signup' : 'login')}
-              className="text-primary hover:underline font-medium"
-            >
+            {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+            <button onClick={() => onSwitchMode(mode === 'login' ? 'signup' : 'login')} className="text-primary hover:underline font-medium">
               {mode === 'login' ? 'Sign up' : 'Sign in'}
             </button>
           </p>
         </div>
-
-        {/* Demo Credentials */}
-        {mode === 'login' && (
-          <motion.div
-            className="text-center p-4 bg-muted rounded-lg"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-          >
-            <p className="text-sm text-muted-foreground mb-2">Demo credentials:</p>
-            <p className="text-xs text-muted-foreground">Email: demo@example.com</p>
-            <p className="text-xs text-muted-foreground">Password: demo123</p>
-          </motion.div>
-        )}
       </motion.div>
     </div>
   );

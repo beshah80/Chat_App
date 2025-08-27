@@ -1,24 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  MessageCircle, 
-  Users, 
-  Send, 
-  Menu, 
-  X, 
-  Search,
-  Phone,
-  Video,
-  MoreVertical,
-  Settings,
-  LogOut,
-  Globe,
-  Smile,
-  Paperclip,
-  Mic,
+import {
   Check,
   CheckCheck,
-  Clock
+  Clock,
+  Globe,
+  LogOut,
+  Menu,
+  MessageCircle,
+  Mic,
+  MoreVertical,
+  Paperclip,
+  Phone,
+  Search,
+  Send,
+  Smile,
+  Users,
+  Video,
+  X
 } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 interface User {
   id: string;
@@ -62,8 +61,73 @@ export function ChatApp({ currentUser, onLogout, onNavigate }: ChatAppProps) {
   const [chats, setChats] = useState<Chat[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const loadMessages = useCallback((chatId: string) => {
+    if (chatId === 'global') {
+      const globalMessages: Message[] = [
+        {
+          id: '1',
+          content: 'Welcome to our global chat room! 👋',
+          senderId: 'system',
+          senderName: 'System',
+          timestamp: new Date(Date.now() - 1000 * 60 * 30),
+          status: 'read',
+          isOwn: false
+        },
+        {
+          id: '2',
+          content: 'Hey everyone! Great to be here!',
+          senderId: 'user-1',
+          senderName: 'John Smith',
+          timestamp: new Date(Date.now() - 1000 * 60 * 25),
+          status: 'read',
+          isOwn: false
+        },
+        {
+          id: '3',
+          content: 'Hello John! Welcome to the community 🎉',
+          senderId: 'user-2',
+          senderName: 'Alice Johnson',
+          timestamp: new Date(Date.now() - 1000 * 60 * 20),
+          status: 'read',
+          isOwn: false
+        },
+        {
+          id: '4',
+          content: 'This is amazing! The interface looks great.',
+          senderId: currentUser?.id || 'current-user',
+          senderName: currentUser?.name || 'You',
+          timestamp: new Date(Date.now() - 1000 * 60 * 15),
+          status: 'read',
+          isOwn: true
+        }
+      ];
+      setMessages(globalMessages);
+    } else {
+      const privateMessages: Message[] = [
+        {
+          id: '1',
+          content: 'Hey! How are you doing?',
+          senderId: chatId,
+          senderName: chats.find(c => c.id === chatId)?.name || 'User',
+          timestamp: new Date(Date.now() - 1000 * 60 * 10),
+          status: 'read',
+          isOwn: false
+        },
+        {
+          id: '2',
+          content: 'I\'m doing great, thanks for asking!',
+          senderId: currentUser?.id || 'current-user',
+          senderName: currentUser?.name || 'You',
+          timestamp: new Date(Date.now() - 1000 * 60 * 8),
+          status: 'read',
+          isOwn: true
+        }
+      ];
+      setMessages(privateMessages);
+    }
+  }, [currentUser?.id, currentUser?.name, chats]);
+
   useEffect(() => {
-    // Initialize mock chats
     const initialChats: Chat[] = [
       {
         id: 'global',
@@ -106,82 +170,11 @@ export function ChatApp({ currentUser, onLogout, onNavigate }: ChatAppProps) {
 
     setChats(initialChats);
     loadMessages('global');
-  }, []);
+  }, [loadMessages]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const loadMessages = (chatId: string) => {
-    if (chatId === 'global') {
-      const globalMessages: Message[] = [
-        {
-          id: '1',
-          content: 'Welcome to our global chat room! 👋',
-          senderId: 'system',
-          senderName: 'System',
-          timestamp: new Date(Date.now() - 1000 * 60 * 30),
-          status: 'read',
-          isOwn: false
-        },
-        {
-          id: '2',
-          content: 'Hey everyone! Great to be here!',
-          senderId: 'user-1',
-          senderName: 'John Smith',
-          timestamp: new Date(Date.now() - 1000 * 60 * 25),
-          status: 'read',
-          isOwn: false
-        },
-        {
-          id: '3',
-          content: 'Hello John! Welcome to the community 🎉',
-          senderId: 'user-2',
-          senderName: 'Alice Johnson',
-          timestamp: new Date(Date.now() - 1000 * 60 * 20),
-          status: 'read',
-          isOwn: false
-        },
-        {
-          id: '4',
-          content: 'This is amazing! The interface looks great.',
-          senderId: currentUser?.id || 'current-user',
-          senderName: currentUser?.name || 'You',
-          timestamp: new Date(Date.now() - 1000 * 60 * 15),
-          status: 'read',
-          isOwn: true
-        }
-      ];
-      setMessages(globalMessages);
-    } else {
-      // Mock private messages
-      const privateMessages: Message[] = [
-        {
-          id: '1',
-          content: 'Hey! How are you doing?',
-          senderId: chatId,
-          senderName: chats.find(c => c.id === chatId)?.name || 'User',
-          timestamp: new Date(Date.now() - 1000 * 60 * 10),
-          status: 'read',
-          isOwn: false
-        },
-        {
-          id: '2',
-          content: 'I\'m doing great, thanks for asking!',
-          senderId: currentUser?.id || 'current-user',
-          senderName: currentUser?.name || 'You',
-          timestamp: new Date(Date.now() - 1000 * 60 * 8),
-          status: 'read',
-          isOwn: true
-        }
-      ];
-      setMessages(privateMessages);
-    }
-  };
-
-  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, [messages]);
 
   const handleSendMessage = () => {
     if (!message.trim() || !currentUser) return;
@@ -199,21 +192,12 @@ export function ChatApp({ currentUser, onLogout, onNavigate }: ChatAppProps) {
     setMessages(prev => [...prev, newMessage]);
     setMessage('');
 
-    // Simulate message status updates
     setTimeout(() => {
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === newMessage.id ? { ...msg, status: 'delivered' } : msg
-        )
-      );
+      setMessages(prev => prev.map(msg => msg.id === newMessage.id ? { ...msg, status: 'delivered' } : msg));
     }, 1000);
 
     setTimeout(() => {
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === newMessage.id ? { ...msg, status: 'read' } : msg
-        )
-      );
+      setMessages(prev => prev.map(msg => msg.id === newMessage.id ? { ...msg, status: 'read' } : msg));
     }, 2000);
   };
 
@@ -227,25 +211,16 @@ export function ChatApp({ currentUser, onLogout, onNavigate }: ChatAppProps) {
   const selectedChat = chats.find(c => c.id === selectedChatId);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
-    });
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
   const getStatusIcon = (status: string, isOwn: boolean) => {
     if (!isOwn) return null;
-
     switch (status) {
-      case 'sent':
-        return <Clock className="w-3 h-3 text-gray-400" />;
-      case 'delivered':
-        return <Check className="w-3 h-3 text-gray-500" />;
-      case 'read':
-        return <CheckCheck className="w-3 h-3 text-blue-500" />;
-      default:
-        return null;
+      case 'sent': return <Clock className="w-3 h-3 text-gray-400" />;
+      case 'delivered': return <Check className="w-3 h-3 text-gray-500" />;
+      case 'read': return <CheckCheck className="w-3 h-3 text-blue-500" />;
+      default: return null;
     }
   };
 
@@ -264,7 +239,6 @@ export function ChatApp({ currentUser, onLogout, onNavigate }: ChatAppProps) {
       </div>
     );
   }
-
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
       {/* Navigation */}

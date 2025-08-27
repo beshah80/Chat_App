@@ -1,13 +1,12 @@
+import { Eye, EyeOff, Loader2, MessageCircle } from 'lucide-react';
 import React, { useState } from 'react';
-import { MessageCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 interface LoginPageProps {
   onLogin: (email: string, password: string) => Promise<boolean>;
   onNavigate: (page: 'home' | 'login' | 'signup' | 'chat') => void;
-  onModeSwitch: () => void;
 }
 
-export function LoginPage({ onLogin, onNavigate, onModeSwitch }: LoginPageProps) {
+export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -23,7 +22,6 @@ export function LoginPage({ onLogin, onNavigate, onModeSwitch }: LoginPageProps)
       ...prev,
       [name]: value
     }));
-    // Clear error when user types
     if (error) setError('');
   };
 
@@ -32,7 +30,6 @@ export function LoginPage({ onLogin, onNavigate, onModeSwitch }: LoginPageProps)
     setIsLoading(true);
     setError('');
 
-    // Basic validation
     if (!formData.email || !formData.password) {
       setError('Please fill in all fields');
       setIsLoading(false);
@@ -47,11 +44,10 @@ export function LoginPage({ onLogin, onNavigate, onModeSwitch }: LoginPageProps)
 
     try {
       const success = await onLogin(formData.email, formData.password);
-      
       if (!success) {
         setError('Invalid email or password');
       }
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
@@ -62,7 +58,7 @@ export function LoginPage({ onLogin, onNavigate, onModeSwitch }: LoginPageProps)
     setIsLoading(true);
     try {
       await onLogin('demo@chatapp.com', 'demo123');
-    } catch (err) {
+    } catch {
       setError('Demo login failed');
     } finally {
       setIsLoading(false);
@@ -133,11 +129,7 @@ export function LoginPage({ onLogin, onNavigate, onModeSwitch }: LoginPageProps)
                   disabled={isLoading}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
@@ -176,17 +168,14 @@ export function LoginPage({ onLogin, onNavigate, onModeSwitch }: LoginPageProps)
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 text-center">
-              Don't have an account?{' '}
-              <button
-                type="button"
-                onClick={onModeSwitch}
-                className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
-              >
-                Sign up
-              </button>
-            </p>
+          <div className="mt-6 text-center text-sm">
+            <span className="text-gray-600">Don&apos;t have an account? </span>
+            <button 
+              onClick={() => onNavigate('signup')}
+              className="text-blue-600 hover:text-blue-500 font-medium hover:underline"
+            >
+              Sign up
+            </button>
           </div>
 
           <div className="mt-4 text-center">

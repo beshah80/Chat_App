@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useChatStore } from '@/store/chatStore';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, User, MessageCircle, Loader2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useChatStore } from '@/store/chatStore';
 import type { SearchResult } from '@/types/chat';
+import { Loader2, MessageCircle, Search, User } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function UserSearch() {
   const {
@@ -28,15 +28,45 @@ export function UserSearch() {
   const debouncedQuery = useDebounce(localQuery, 300);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Focus input on mount
   useEffect(() => {
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
+    searchInputRef.current?.focus();
   }, []);
 
+  // Update global searchQuery when debouncedQuery changes
   useEffect(() => {
     setSearchQuery(debouncedQuery);
   }, [debouncedQuery, setSearchQuery]);
+
+  // Search users when debouncedQuery changes
+  const searchUsers = useCallback(
+    async (query: string) => {
+      if (!token) return;
+
+      setSearching(true);
+      try {
+        const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSearchResults(data.users || []);
+        } else {
+          console.error('Search failed:', response.statusText);
+          setSearchResults([]);
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    },
+    [token, setSearchResults, setSearching]
+  );
 
   useEffect(() => {
     if (debouncedQuery.trim().length >= 2) {
@@ -44,33 +74,7 @@ export function UserSearch() {
     } else {
       setSearchResults([]);
     }
-  }, [debouncedQuery]);
-
-  const searchUsers = async (query: string) => {
-    if (!token) return;
-
-    setSearching(true);
-    try {
-      const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data.users || []);
-      } else {
-        console.error('Search failed:', response.statusText);
-        setSearchResults([]);
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      setSearchResults([]);
-    } finally {
-      setSearching(false);
-    }
-  };
+  }, [debouncedQuery, searchUsers, setSearchResults]);
 
   const startConversation = async (user: SearchResult) => {
     if (!token) return;
@@ -89,14 +93,10 @@ export function UserSearch() {
         const data = await response.json();
         
         if (data.isNew) {
-          // Add new conversation to store
           addConversation(data.conversation);
         }
         
-        // Set as active conversation
         setActiveConversation(data.conversation.id);
-        
-        // Close search
         setSearchOpen(false);
         setLocalQuery('');
         setSearchQuery('');
@@ -169,7 +169,7 @@ export function UserSearch() {
               <User className="w-6 h-6 text-gray-400" />
             </div>
             <p className="text-sm text-gray-500">
-              No users found matching "{localQuery}"
+              No users found matching &quot;{localQuery}&quot;
             </p>
           </div>
         ) : (
