@@ -2,7 +2,7 @@ import { withAuth } from '@/lib/auth';
 import { searchUsers } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
-export const GET = withAuth(async (request: NextRequest, user: any) => {
+export const GET = withAuth(async (request: NextRequest, user) => {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');

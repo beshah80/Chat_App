@@ -1,10 +1,13 @@
 // app/api/auth/register/route.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
+
+// Define a type for safe user data (excluding password)
+type SafeUser = Omit<User, 'password'>;
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,12 +86,13 @@ export async function POST(request: NextRequest) {
       { expiresIn: '7d' }
     );
 
-    // Remove password from returned user (fix ESLint warning)
+    // Remove password from returned user
     const { password: _, ...safeUser } = user;
+    const responseUser: SafeUser = safeUser;
 
     return NextResponse.json({
       token,
-      user: safeUser,
+      user: responseUser,
     });
   } catch (error) {
     console.error('Registration error:', error);

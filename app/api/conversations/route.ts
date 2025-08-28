@@ -2,7 +2,7 @@ import { withAuth } from '@/lib/auth';
 import { getUserConversations, prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
-export const GET = withAuth(async (request: NextRequest, user: any) => {
+export const GET = withAuth(async (request: NextRequest, user) => {
   try {
     // Get conversations with message count for unread badge
     const conversations = await getUserConversations(user.id);

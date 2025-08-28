@@ -203,7 +203,7 @@ export const createUser = async (credentials: RegisterCredentials): Promise<Auth
 // ------------------ Other Helpers ------------------
 export function sanitizeUser(user: User & { password?: string }): User {
   // Remove password in a way that doesn't create unused variable warnings
-  const copy = { ...user } as any;
+  const copy = { ...user };
   if (copy.password !== undefined) delete copy.password;
   return copy as User;
 }
