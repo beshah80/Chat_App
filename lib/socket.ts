@@ -24,11 +24,13 @@ export type NextApiResponseServerIO = NextApiResponse & {
   };
 };
 
-// Track users with session support
-const userSessions = new Map<string, { userId: string; socketId: string; sessionId: string; rooms: Set<string> }>();
+// Track user sessions
+const userSessions = new Map<
+  string,
+  { userId: string; socketId: string; sessionId: string; rooms: Set<string> }
+>();
 const activeUserSessions = new Map<string, Set<string>>(); // userId -> set of session IDs
 
-// Create or get global chat
 export async function createGlobalChat() {
   let globalChat = await prisma.conversation.findFirst({
     where: { isGlobal: true, type: 'GLOBAL' }
@@ -54,7 +56,7 @@ export const initSocket = (res: NextApiResponseServerIO) => {
         origin:
           process.env.NODE_ENV === 'production'
             ? process.env.NEXT_PUBLIC_APP_URL
-            : ['http://localhost:3000', 'http://127.0.0.1:3000'],
+            : process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000',
         methods: ['GET', 'POST'],
         credentials: true
       },
@@ -64,6 +66,7 @@ export const initSocket = (res: NextApiResponseServerIO) => {
     io.on('connection', (socket: Socket) => {
       console.log(`Socket connected: ${socket.id}`);
 
+      // ----- JOIN GLOBAL CHAT -----
       socket.on('joinGlobal', async (userId: string) => {
         try {
           if (!userId) return;
@@ -83,7 +86,6 @@ export const initSocket = (res: NextApiResponseServerIO) => {
           }
 
           await addUserToGlobalChat(userId);
-
           socket.join(globalChat.id);
 
           const sessionData = userSessions.get(`${userId}-${sessionId}`) || {
@@ -110,6 +112,7 @@ export const initSocket = (res: NextApiResponseServerIO) => {
         }
       });
 
+      // ----- JOIN PRIVATE CHAT -----
       socket.on('joinPrivate', (conversationId: string) => {
         try {
           const userId = socket.data.userId;
@@ -136,6 +139,7 @@ export const initSocket = (res: NextApiResponseServerIO) => {
         }
       });
 
+      // ----- SEND MESSAGE -----
       socket.on('sendMessage', async (data: SocketSendMessageData) => {
         try {
           const { conversationId, senderId, content, type = 'TEXT', replyToId, tempId } = data;
@@ -180,6 +184,7 @@ export const initSocket = (res: NextApiResponseServerIO) => {
         }
       });
 
+      // ----- TYPING EVENTS -----
       socket.on('typing', (data: { conversationId: string; userId: string; name: string }) => {
         if (!data.conversationId || !data.userId || !data.name) return;
         socket.to(data.conversationId).emit('userTyping', data);
@@ -190,6 +195,7 @@ export const initSocket = (res: NextApiResponseServerIO) => {
         socket.to(data.conversationId).emit('userStoppedTyping', data);
       });
 
+      // ----- OFFLINE -----
       socket.on('goOffline', async (userId: string) => {
         try {
           const sessionId = socket.data.sessionId;
@@ -211,6 +217,7 @@ export const initSocket = (res: NextApiResponseServerIO) => {
         }
       });
 
+      // ----- DISCONNECT -----
       socket.on('disconnect', async () => {
         const userId = socket.data.userId;
         const sessionId = socket.data.sessionId;
