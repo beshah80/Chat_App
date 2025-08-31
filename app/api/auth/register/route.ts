@@ -1,4 +1,3 @@
-// app/api/auth/register/route.ts
 import { PrismaClient, User } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -11,17 +10,17 @@ type SafeUser = Omit<User, 'password'>;
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json();
+    const { name, email, password: rawPassword } = await request.json();
 
     // Validate input
-    if (!name || !email || !password) {
+    if (!name || !email || !rawPassword) {
       return NextResponse.json(
         { error: 'Name, email, and password are required' },
         { status: 400 }
       );
     }
 
-    if (password.length < 6) {
+    if (rawPassword.length < 6) {
       return NextResponse.json(
         { error: 'Password must be at least 6 characters long' },
         { status: 400 }
@@ -41,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(rawPassword, 12);
 
     // Create user
     const user = await prisma.user.create({
@@ -86,9 +85,8 @@ export async function POST(request: NextRequest) {
       { expiresIn: '7d' }
     );
 
-    // Remove password from returned user
-    const { password: _, ...safeUser } = user;
-    const responseUser: SafeUser = safeUser;
+    // Exclude password from response without creating unused variable
+    const { password: _, ...responseUser }: SafeUser & { password: string } = user;
 
     return NextResponse.json({
       token,

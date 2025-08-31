@@ -102,11 +102,11 @@ function normalizeUser(user: {
  * Preserving that signature is critical so Next's generated type-checks won't detect mismatched param shapes.
  */
 export function withAuth<
-  Ctx extends { params?: Record<string, string> } | undefined = { params?: Record<string, string> }
+  Ctx extends { params?: Record<string, string> } = { params?: Record<string, string> }
 >(
-  handler: (req: NextRequest, user: User, context?: Ctx) => Promise<Response | NextResponse>
+  handler: (req: NextRequest, user: User, context: Ctx) => Promise<Response | NextResponse>
 ) {
-  return async (req: NextRequest, context?: Ctx): Promise<Response | NextResponse> => {
+  return async (req: NextRequest, context: Ctx): Promise<Response | NextResponse> => {
     try {
       const authHeader = req.headers.get('authorization');
       const token = extractTokenFromHeader(authHeader);

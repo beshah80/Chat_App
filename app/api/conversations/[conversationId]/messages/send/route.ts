@@ -16,11 +16,11 @@ export const POST = withAuth(
   async (
     request: NextRequest,
     user: User,
-    context?: { params?: { conversationId: string } }
+    context: { params?: Record<string, string> }
   ) => {
     try {
-      const conversationId = context?.params?.conversationId;
-      if (!conversationId) {
+      const conversationId = context.params?.conversationId;
+      if (typeof conversationId !== 'string' || !conversationId) {
         return NextResponse.json({ error: 'Missing conversationId' }, { status: 400 });
       }
 
