@@ -101,6 +101,7 @@ Before running this application, make sure you have:
   - `/.env` - Environment variables
 
 ## Project Structure
+```
 Chat_App
 ├── app
 │   ├── (auth)
@@ -241,6 +242,7 @@ Chat_App
 ├── postcss.config.js
 ├── README.md
 └── tailwind.config.js
+```
 
 ## Key Components
 
