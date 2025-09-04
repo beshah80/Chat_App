@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-// Define a type for safe user data (excluding password)
+// Safe user type excluding password
 type SafeUser = Omit<User, 'password'>;
 
 export async function POST(request: NextRequest) {
@@ -68,13 +68,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Add user to global conversation
-    await prisma.conversation.update({
-      where: { id: globalConversation.id },
+    // Safely add user to global conversation via Participant table
+    await prisma.participant.create({
       data: {
-        participants: {
-          connect: { id: user.id },
-        },
+        userId: user.id,
+        conversationId: globalConversation.id,
       },
     });
 
@@ -85,12 +83,13 @@ export async function POST(request: NextRequest) {
       { expiresIn: '7d' }
     );
 
-    // Exclude password from response without creating unused variable
+    // Exclude password from response
     const { password: _, ...responseUser }: SafeUser & { password: string } = user;
 
     return NextResponse.json({
       token,
       user: responseUser,
+      message: 'Registration successful!',
     });
   } catch (error) {
     console.error('Registration error:', error);

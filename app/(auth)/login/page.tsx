@@ -4,17 +4,19 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { AuthForm, type AuthFormData } from '../../../components/auth/AuthForm';
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null); // ✅ new success state
 
-  const handleLogin = async (data: AuthFormData) => {
+  const handleSignup = async (data: AuthFormData) => {
     setIsLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -28,14 +30,17 @@ export default function LoginPage() {
         // Store token in localStorage
         localStorage.setItem('auth-token', result.token);
 
-        // Redirect to chat
-        router.push('/chat');
+        // ✅ Show success message in AuthForm
+        setSuccessMessage(`Account created successfully! Welcome, ${result.user.name}.`);
+
+        // Redirect after a short delay so message is visible
+        setTimeout(() => {
+          router.push('/chat');
+        }, 1000);
       } else {
-        setError(result.error || 'Login failed');
+        setError(result.error || 'Registration failed');
       }
     } catch {
-      // The `catch` block now handles the error without needing the error variable,
-      // resolving the linting warning about an unused variable.
       setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
@@ -43,15 +48,16 @@ export default function LoginPage() {
   };
 
   const handleModeSwitch = () => {
-    router.push('/signup');
+    router.push('/login');
   };
 
   return (
     <AuthForm
-      mode="login"
-      onSubmit={handleLogin}
+      mode="register"
+      onSubmit={handleSignup}
       isLoading={isLoading}
       error={error}
+      successMessage={successMessage} // ✅ pass success message
       onModeSwitch={handleModeSwitch}
     />
   );

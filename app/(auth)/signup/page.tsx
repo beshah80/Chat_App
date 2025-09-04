@@ -8,10 +8,12 @@ export default function SignupPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null); // ✅ success state
 
   const handleSignup = async (data: AuthFormData) => {
     setIsLoading(true);
     setError(null);
+    setSuccessMessage(null); // clear previous messages
 
     try {
       const response = await fetch('/api/auth/register', {
@@ -25,17 +27,20 @@ export default function SignupPage() {
       const result = await response.json();
 
       if (response.ok) {
-        // Store token in localStorage
+        // Store token
         localStorage.setItem('auth-token', result.token);
 
-        // Redirect to chat
-        router.push('/chat');
+        // Show success message
+        setSuccessMessage(`Account created successfully! Welcome, ${result.user.name}.`);
+
+        // Delay redirect to show message
+        setTimeout(() => {
+          router.push('/chat');
+        }, 1000); // 1 second delay
       } else {
         setError(result.error || 'Registration failed');
       }
     } catch {
-      // The `catch` block now handles the error without needing the error variable,
-      // resolving the linting warning about an unused variable.
       setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
@@ -43,6 +48,9 @@ export default function SignupPage() {
   };
 
   const handleModeSwitch = () => {
+    // Clear messages when switching modes
+    setError(null);
+    setSuccessMessage(null);
     router.push('/login');
   };
 
@@ -52,6 +60,7 @@ export default function SignupPage() {
       onSubmit={handleSignup}
       isLoading={isLoading}
       error={error}
+      successMessage={successMessage} // ✅ pass to AuthForm
       onModeSwitch={handleModeSwitch}
     />
   );

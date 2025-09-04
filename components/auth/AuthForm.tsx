@@ -1,17 +1,18 @@
 'use client';
 
+import { ArrowLeft, Eye, EyeOff, Loader2, Lock, Mail, User } from 'lucide-react';
 import { useState } from 'react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Loader2, Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
+import { Input } from '../ui/input';
 
 interface AuthFormProps {
   mode: 'login' | 'register';
   onSubmit: (data: AuthFormData) => Promise<void>;
   isLoading?: boolean;
   error?: string | null;
+  successMessage?: string | null; // ✅ add successMessage prop
   onModeSwitch: () => void;
   onBack?: () => void;
 }
@@ -22,7 +23,7 @@ export interface AuthFormData {
   password: string;
 }
 
-export function AuthForm({ mode, onSubmit, isLoading = false, error, onModeSwitch, onBack }: AuthFormProps) {
+export function AuthForm({ mode, onSubmit, isLoading = false, error, successMessage, onModeSwitch, onBack }: AuthFormProps) {
   const [formData, setFormData] = useState<AuthFormData>({
     name: '',
     email: '',
@@ -73,7 +74,6 @@ export function AuthForm({ mode, onSubmit, isLoading = false, error, onModeSwitc
 
   const handleInputChange = (field: keyof AuthFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear validation error when user starts typing
     if (validationErrors[field]) {
       setValidationErrors(prev => ({ ...prev, [field]: undefined }));
     }
@@ -113,9 +113,17 @@ export function AuthForm({ mode, onSubmit, isLoading = false, error, onModeSwitc
 
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {/* Error Alert */}
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Success Alert */}
+            {successMessage && (
+              <Alert variant="default">
+                <AlertDescription>{successMessage}</AlertDescription>
               </Alert>
             )}
 
