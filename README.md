@@ -1,3 +1,10 @@
+# 💬 Project Participants
+
+- Fanuel Derbe (@FANU_D)
+- Beshah Ashenafi (@Future_f0)
+- Amanuel Takile (@wagesofsin_paid26)
+- Gezahegn Birhanu (@bgdvlpr_men)
+
 # 💬 Chat Application - Real-time Messaging Platform
 
 A modern, full-stack chat application built with Next.js, TypeScript, Socket.IO, Prisma, and PostgreSQL. Features real-time messaging, global chat rooms, private conversations, user authentication, and a responsive design.
