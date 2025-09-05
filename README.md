@@ -345,4 +345,5 @@ To continue development:
 5. Test the real-time messaging functionality
 
 ## 📹 Demo Video
-**Watch the project demo video here: https://drive.google.com/file/d/1Skx18H_91m_rO5Cz3U-Ti709xQt1RRuv/view?usp=sharing**
+**Watch the project demo video here: https://drive.google.com/file/d/1Skx18H_91m_rO5Cz3U-Ti709xQt1RRuv/view?usp=sharing**  
+**Try the live demo here: https://chat-app-final-eji4.vercel.app/**
