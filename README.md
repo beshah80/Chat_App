@@ -1,8 +1,8 @@
-Chat Application - Real-time Messaging Platform
+# 💬 Chat Application - Real-time Messaging Platform
 
 A modern, full-stack chat application built with Next.js, TypeScript, Socket.IO, Prisma, and PostgreSQL. Features real-time messaging, global chat rooms, private conversations, user authentication, and a responsive design.
 
-## Features
+## ✨ Features
 - Real-time Messaging: Instant messaging with Socket.IO
 - Global Chat Room: All users automatically join a global chat
 - Private Conversations: One-on-one messaging
@@ -12,7 +12,7 @@ A modern, full-stack chat application built with Next.js, TypeScript, Socket.IO,
 - Responsive Design: Works on desktop, tablet, and mobile
 - Modern UI: Clean, intuitive interface with Tailwind CSS
 
-## Tech Stack
+## 🛠️ Tech Stack
 - Frontend: Next.js 15.4.6, TypeScript, Tailwind CSS, CSS
 - Backend: Next.js API Routes, Prisma ORM
 - Database: PostgreSQL
@@ -21,13 +21,13 @@ A modern, full-stack chat application built with Next.js, TypeScript, Socket.IO,
 - UI Components: Custom components with shadcn/ui
 - Icons: Lucide React
 
-## Prerequisites
+## 📋 Prerequisites
 Before running this application, make sure you have:
 - Node.js 18.0 or later
 - PostgreSQL database
 - npm or yarn package manager
 
-## Installation & Setup
+## 🚀 Installation & Setup
 1. Clone the repository
    ```
    git clone <your-repo-url>
@@ -73,7 +73,7 @@ Before running this application, make sure you have:
    ```
    The application will be available at http://localhost:3000.
 
-## Fixed Issues
+## 🔧 Fixed Issues
 
 ### Socket.IO Integration
 - Problem: Standalone `server.ts` file was conflicting with Next.js
@@ -100,7 +100,7 @@ Before running this application, make sure you have:
   - `/next.config.js` - Socket.IO configuration
   - `/.env` - Environment variables
 
-## Project Structure
+## 📁 Project Structure
 ```
 Chat_App
 ├── app
@@ -244,7 +244,7 @@ Chat_App
 └── tailwind.config.js
 ```
 
-## Key Components
+## 🔑 Key Components
 
 ### Socket.IO Integration
 - Server: `/pages/api/socket.ts` - WebSocket server
@@ -262,21 +262,21 @@ Chat_App
 - SignupForm: User registration
 - Auth Context: Authentication state management
 
-## Usage
+## 📲 Usage
 - Sign Up/Login: Create an account or log in
 - Global Chat: Automatically join the global chat room
 - Private Chat: Search for users and start private conversations
 - Real-time Messaging: Send and receive messages instantly
 - Status Indicators: See message delivery status and user online status
 
-## Security Features
+## 🔒 Security Features
 - JWT authentication
 - Input validation
 - SQL injection prevention with Prisma
 - CORS configuration for Socket.IO
 - Environment variable protection
 
-## Deployment
+## 🚀 Deployment
 
 ### Environment Variables for Production
 Update your production environment variables:
@@ -294,14 +294,14 @@ npm run build
 npm start
 ```
 
-## Contributing
+## 🤝 Contributing
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
 4. Run tests and linting
 5. Submit a pull request
 
-## Troubleshooting
+## 🛠️ Troubleshooting
 
 ### Common Issues
 
@@ -327,7 +327,7 @@ If you encounter issues:
 - Verify all environment variables are set
 - Ensure the database is properly configured
 
-## Next Steps
+## 📈 Next Steps
 The application is now properly configured and should run without the previous loading issues. The Socket.IO integration is working correctly with Next.js, and real-time messaging is functional.
 
 To continue development:
@@ -336,3 +336,6 @@ To continue development:
 3. Run the migration commands
 4. Start the development server
 5. Test the real-time messaging functionality
+
+## 📹 Demo Video
+**Watch the project demo video here: https://drive.google.com/file/d/1Skx18H_91m_rO5Cz3U-Ti709xQt1RRuv/view?usp=sharing**
